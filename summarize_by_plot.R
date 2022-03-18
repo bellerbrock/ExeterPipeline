@@ -1,13 +1,15 @@
 require(tidyverse)
 require(magrittr)
 library(data.table)
+# install.packages("WriteXLS")  # for export .xls file to SPbase
+library(WriteXLS)
 
 # VARIABLES TO SET
 trial_name = "21MC010024CUNA03"
 plants_harvested_per_plot = 20
 person = "Russell"
+working_directory = "~/Documents"
 base_path = "~/Desktop/GRADER"
-
 
 # Read in data
 data.files  <- list.files(
@@ -18,7 +20,11 @@ data.files  <- list.files(
 )
 
 data <- lapply(data.files, fread, sep=",", fill=TRUE)
-data.use <- rbindlist( data , fill=TRUE)
+data.use <- unique(rbindlist( data , fill=TRUE))
+
+# Write complied unique input to TRIALNAME_unique_raw_data.csv file
+setwd(working_directory)
+write.csv(data.use, paste(trial_name, "_unique_raw_data.csv", sep=""), row.names = F)
 
 # Add header
 colnames(data.use) <- c(
@@ -120,7 +126,6 @@ data.use$weightg <- as.numeric(data.use$estimatedweight) * 2.8349523 # g per 1/1
 data.use$max.volumecc <- pi * (as.numeric(data.use$diametercm)/2)^2 * as.numeric(data.use$lengthcm)  # cyclindrical volume = pi*r2*h
 data.use$blockiness <- round(data.use$weightg / data.use$max.volumecc, digits = 2)
 
-
 # Create an empty dataframe for plot summaries
 plot.names = unique(data.use$plotname)                   # list of all plots
 descript.results = data.frame(plotname = plot.names )    # create an empty dataframe
@@ -143,7 +148,6 @@ descript.results = data.frame(plotname = plot.names )    # create an empty dataf
 #     )
 #   )
 # }
-
 
 # Populate output dataframe with plot summaries
 for (i in 1:length(plot.names)) {
@@ -392,7 +396,7 @@ for (i in 1:length(plot.names)) {
 
 # Write spbase-ready output to table and database format plot summary files
 
-outfile <- paste(trial_name, "_database_plot_summaries.csv")
+outfile <- paste(trial_name, "_database_plot_summaries.csv", sep="")
 header = as.matrix(t(c("plot_name", "trait", "value", "timestamp", "person", "location", "number")))
 write.table(
   header,
@@ -421,41 +425,9 @@ for (i in 1:nrow(descript.results)) {
 
 spbase <- descript.results[,c(1:18)]
 colnames(spbase)[1] <- "observationunit_name"
-write.csv(spbase, paste(trial_name, "_table_plot_summaries.csv", sep=""), row.names = F)
+# write.csv(spbase, paste(trial_name, "_table_plot_summaries.csv", sep=""), row.names = F)
+WriteXLS(spbase, ExcelFileName=paste(trial_name, "_table_plot_summaries.xls", sep=""), SheetNames = trial_name)
 
 # Write all output to TRIALNAME_complete_plot_summaries file
 
 write.csv(descript.results, paste(trial_name, "_complete_plot_summaries.csv", sep=""), row.names = F)
-
-
-# colnames(descript.results)[1] <- "observationunit_name"
-# 
-# ordered <- descript.results[order(descript.results$number_no1,decreasing = TRUE),]
-
-# barplot(
-#   height = ordered$number_no1,
-#   names = ordered$observationunit_name,
-#   col= ordered$average_color,
-#   title="no1 root count",
-#   las=2,
-#   cex.lab=0.75
-# )
-# 
-# barplot(
-#   height = ordered$number_no1,
-#   names = ordered$observationunit_name,
-#   col= ordered$predominant_color,
-#   title="no1 root count",
-#   las=2,
-#   cex.lab=0.75
-# )
-# 
-# dim(descript.results)
-# 
-# hist(descript.results$number_all)
-# hist(descript.results$number_canner)
-# hist(descript.results$number_no1)
-# hist(descript.results$number_jumbo)
-# hist(descript.results$number_cull)
-# hist(descript.results$percent_Markewt_no1)
-
