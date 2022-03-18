@@ -5,15 +5,15 @@ library(data.table)
 library(WriteXLS)
 
 # VARIABLES TO SET
+data_directory_to_search = "~/Desktop/GRADER"
 trial_name = "21MC010024CUNA03"
 plants_harvested_per_plot = 20
 person = "Russell"
-working_directory = "~/Documents"
-base_path = "~/Desktop/GRADER"
+output_directory = "~/Documents"
 
 # Read in data
 data.files  <- list.files(
-  path=base_path,
+  path=data_directory_to_search,
   recursive=T,
   pattern=paste(trial_name, ".csv", sep=''),
   full.names=T
@@ -23,7 +23,7 @@ data <- lapply(data.files, fread, sep=",", fill=TRUE)
 data.use <- unique(rbindlist( data , fill=TRUE))
 
 # Write complied unique input to TRIALNAME_unique_raw_data.csv file
-setwd(working_directory)
+setwd(output_directory)
 write.csv(data.use, paste(trial_name, "_unique_raw_data.csv", sep=""), row.names = F)
 
 # Add header
